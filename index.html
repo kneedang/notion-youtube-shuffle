@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shuffle YouTube Playlist</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: transparent; color: CanvasText;
+    }
+    .player-card { width: 100%; max-width: 900px; margin: 0 auto; }
+    .heading { font-size: 1rem; font-weight: 650; margin: 0 0 10px; }
+    .video-wrap {
+      width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+      border-radius: 12px; background: #111;
+    }
+    #player { width: 100%; height: 100%; }
+    .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+    button, a {
+      border: 0; border-radius: 999px; padding: 10px 15px;
+      font: inherit; font-size: .92rem; text-decoration: none; cursor: pointer;
+    }
+    button { background: #262626; color: #fff; }
+    button:disabled { opacity: .55; cursor: wait; }
+    a { color: CanvasText; border: 1px solid #8887; }
+    #status { font-size: .82rem; opacity: .75; margin-top: 9px; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <main class="player-card">
+    <h1 class="heading">Your shuffled playlist</h1>
+    <div class="video-wrap"><div id="player"></div></div>
+    <div class="actions">
+      <button id="shufflePlay" disabled>⤨ Shuffle &amp; Play</button>
+      <a href="https://www.youtube.com/playlist?list=PLnf86dZ2MjbtZ5O1a9lhc4Xa5iIT7pJYA" target="_blank" rel="noopener">Open playlist on YouTube ↗</a>
+    </div>
+    <div id="status" role="status">Loading playlist…</div>
+  </main>
+
+  <script>
+    const PLAYLIST_ID = "PLnf86dZ2MjbtZ5O1a9lhc4Xa5iIT7pJYA";
+    let player;
+    const button = document.getElementById("shufflePlay");
+    const status = document.getElementById("status");
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        width: "100%",
+        height: "100%",
+        playerVars: {
+          listType: "playlist",
+          list: PLAYLIST_ID,
+          playsinline: 1,
+          controls: 1,
+          rel: 0
+        },
+        events: {
+          onReady: function (event) {
+            // Shuffle as soon as the playlist player is ready.
+            event.target.setShuffle(true);
+            button.disabled = false;
+            status.textContent = "Playlist loaded. Shuffle is enabled.";
+          },
+          onStateChange: function (event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+              status.textContent = "Playing in shuffled order.";
+            } else if (event.data === YT.PlayerState.ENDED) {
+              status.textContent = "Playlist finished.";
+            }
+          },
+          onError: function () {
+            status.textContent = "YouTube could not play this item. Try opening the playlist on YouTube.";
+          }
+        }
+      });
+    }
+
+    button.addEventListener("click", function () {
+      if (!player || typeof player.setShuffle !== "function") return;
+      // Shuffle again on each press, then start playback from the shuffled playlist.
+      player.setShuffle(true);
+      player.playVideo();
+      status.textContent = "Shuffling playlist…";
+    });
+
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  </script>
+</body>
+</html>
